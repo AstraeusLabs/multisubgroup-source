@@ -1,0 +1,41 @@
+# Copyright (c) 2025 Demant A/S
+# Copyright (c) 2023 Nordic Semiconductor ASA
+# SPDX-License-Identifier: Apache-2.0
+
+mainmenu "Bluetooth: Broadcast Audio Source"
+
+choice BT_BAP_AUDIO_SR
+    prompt "Audio Sample Rate"
+    default BT_BAP_AUDIO_SR_16K
+
+config BT_BAP_AUDIO_SR_16K
+    bool "16kHz"
+
+config BT_BAP_AUDIO_SR_24K
+    bool "24kHz"
+
+config BT_BAP_AUDIO_SR_48K
+    bool "48kHz"
+
+endchoice
+
+choice BT_BAP_AUDIO_CH
+    prompt "Audio Channel Mode"
+    default BT_BAP_AUDIO_CH_MONO
+
+config BT_BAP_AUDIO_CH_MONO
+    bool "Mono"
+
+config BT_BAP_AUDIO_CH_STEREO
+    bool "Stereo"
+
+endchoice
+
+config BROADCAST_CODE
+	string "The broadcast code (if any) to use for encrypted broadcast"
+	default ""
+	help
+	   Setting a non-empty string for this option will encrypt the broadcast using this
+	   string as the broadcast code. The length of the string shall be between 1 and 16 octets.
+
+source "Kconfig.zephyr"
