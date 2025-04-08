@@ -33,26 +33,33 @@ static const uint8_t *lc3_audio[] = {
 };
 
 
-#define SET_SUBGROUP_NAME_METADATA		true
-#define SET_SUBGROUP_LANGUAGES_METADATA		true
-#define SET_SUBGROUP_PARENTALSS_METADATA	true
+#define SET_SUBGROUP_LANGUAGE_METADATA		true
+#define SET_SUBGROUP_PARENTAL_METADATA		true
+#define SET_SUBGROUP_BROADCASTNAME_METADATA	true
+#define SET_SUBGROUP_PROGRAMINFO_METADATA	true
 
-const uint8_t *subgroup_names[] = {
-	"Subgroup_Audio_1",
-	"Subgroup_Audio_2",
-	"Subgroup_Audio_3"
-};
-
-const uint8_t *subgroup_languages[] = {
+const uint8_t *subgroup_language[] = {
 	"eng",
 	"fra",
 	"spa"
 };
 
-enum bt_audio_parental_rating subgroup_parentals[] = {
+enum bt_audio_parental_rating subgroup_parental[] = {
 	BT_AUDIO_PARENTAL_RATING_AGE_ANY,
 	BT_AUDIO_PARENTAL_RATING_AGE_5_OR_ABOVE,
 	BT_AUDIO_PARENTAL_RATING_NO_RATING
+};
+
+const uint8_t *subgroup_broadcast_name[] = {
+	"Broadcast 1",
+	"Broadcast 2",
+	"Broadcast 3"
+};
+
+const uint8_t *subgroup_program_info[] = {
+	"Program info 1",
+	"Program info 2",
+	"Program info 3"
 };
 
 #endif /* LC3_AUDIO_H */

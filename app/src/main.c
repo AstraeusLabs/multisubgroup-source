@@ -293,58 +293,72 @@ static struct bt_bap_stream_ops stream_ops = {
 	.sent    = stream_sent_cb,
 };
 
+static int get_lc3_preset(struct bt_bap_lc3_preset *preset, const char *preset_arg)
+{
+	for (size_t i = 0U; i < ARRAY_SIZE(lc3_broadcast_presets); i++) {
+		if (strcmp(preset_arg, lc3_broadcast_presets[i].name) == 0) {
+			*preset = lc3_broadcast_presets[i].preset;
+			return 0;
+		}
+	}
+
+	return -EINVAL;
+}
+
 static int setup_broadcast_source(void)
 {
+	static struct bt_audio_codec_cfg subgroup_codec_cfg[NUM_SUBGROUPS];
 	struct bt_bap_broadcast_source_stream_param stream_params[NUM_STREAMS];
 	struct bt_bap_broadcast_source_subgroup_param subgroup_params[NUM_SUBGROUPS];
 	struct bt_bap_broadcast_source_param create_param = { 0 };
-	const struct named_lc3_preset *named_preset = NULL;
-	struct bt_audio_codec_cfg codec_cfg;
-	struct bt_bap_qos_cfg qos;
-	const char *broadcast_preset_arg_name = BROADCAST_PRESET_ARG_NAME;
+	struct bt_bap_lc3_preset preset_lc3;
+	int err;
 
 
-	for (size_t i = 0U; i < ARRAY_SIZE(lc3_broadcast_presets); i++) {
-		if (!strcmp(broadcast_preset_arg_name, lc3_broadcast_presets[i].name)) {
-			named_preset = &lc3_broadcast_presets[i];
-		}
+	err = get_lc3_preset(&preset_lc3, BROADCAST_PRESET_ARG_NAME);
+	if (err) {
+		printk("Failed to get LC3 preset: %s\n", BROADCAST_PRESET_ARG_NAME);
+		return err;
 	}
-
-	if (named_preset == NULL) {
-		printk("Invalid LC3 preset: %s\n", broadcast_preset_arg_name);
-		return -EINVAL;
-	}
-
-	memcpy(&codec_cfg, &named_preset->preset.codec_cfg, sizeof(codec_cfg));
-	memcpy(&qos, &named_preset->preset.qos, sizeof(qos));
 
 	for (size_t i = 0; i < NUM_SUBGROUPS; i++) {
-		subgroup_params[i].params_count = 1;
-		subgroup_params[i].params = &stream_params[i];
-		subgroup_params[i].codec_cfg = &codec_cfg;
+		memcpy(&subgroup_codec_cfg[i], &preset_lc3.codec_cfg,
+		       sizeof(struct bt_audio_codec_cfg));
 
 #if defined(CONFIG_BT_BAP_AUDIO_CH_MONO)
 		/* MONO is implicit if omitted */
-		bt_audio_codec_cfg_unset_val(subgroup_params[i].codec_cfg, BT_AUDIO_CODEC_CFG_CHAN_ALLOC);
+		bt_audio_codec_cfg_unset_val(&subgroup_codec_cfg[i],
+			BT_AUDIO_CODEC_CFG_CHAN_ALLOC);
 #endif
 
-#if (SET_SUBGROUP_NAME_METADATA)
-		if (strlen(subgroup_names[i]) > 0) {
-			bt_audio_codec_cfg_meta_set_broadcast_name(subgroup_params[i].codec_cfg,
-				(const uint8_t *)subgroup_names[i],
-				strlen(subgroup_names[i]));
+#if (SET_SUBGROUP_LANGUAGE_METADATA)
+		if (strlen(subgroup_language[i]) == BT_AUDIO_LANG_SIZE) {
+			bt_audio_codec_cfg_meta_set_lang(&subgroup_codec_cfg[i],
+				subgroup_language[i]);
 		}
 #endif
-#if (SET_SUBGROUP_LANGUAGES_METADATA)
-		if (strlen(subgroup_languages[i]) == BT_AUDIO_LANG_SIZE) {
-			bt_audio_codec_cfg_meta_set_lang(subgroup_params[i].codec_cfg, subgroup_languages[i]);
+#if (SET_SUBGROUP_PARENTAL_METADATA)
+		if (subgroup_parental[i] <= BT_AUDIO_PARENTAL_RATING_AGE_18_OR_ABOVE) {
+			bt_audio_codec_cfg_meta_set_parental_rating(&subgroup_codec_cfg[i],
+				subgroup_parental[i]);
 		}
 #endif
-#if (SET_SUBGROUP_PARENTALSS_METADATA)
-		if (subgroup_parentals[i] <= BT_AUDIO_PARENTAL_RATING_AGE_18_OR_ABOVE) {
-			bt_audio_codec_cfg_meta_set_parental_rating(subgroup_params[i].codec_cfg, subgroup_parentals[i]);
+#if (SET_SUBGROUP_BROADCASTNAME_METADATA)
+		if (strlen(subgroup_broadcast_name[i]) > 0) {
+			bt_audio_codec_cfg_meta_set_broadcast_name(&subgroup_codec_cfg[i],
+				subgroup_broadcast_name[i], strlen(subgroup_broadcast_name[i]));
 		}
 #endif
+#if (SET_SUBGROUP_POGRAMINFO_METADATA)
+		if (strlen(subgroup_program_info[i]) > 0) {
+			bt_audio_codec_cfg_meta_set_program_info(&subgroup_codec_cfg[i],
+				subgroup_program_info[i], strlen(subgroup_program_info[i]));
+		}
+#endif
+
+		subgroup_params[i].params_count = 1;
+		subgroup_params[i].params = &stream_params[i];
+		subgroup_params[i].codec_cfg = &subgroup_codec_cfg[i];
 	}
 
 	for (size_t j = 0; j < NUM_STREAMS; j++) {
@@ -368,7 +382,7 @@ static int setup_broadcast_source(void)
 		printk("Stream %d: Number of samples: %d\n", j, nsamples);
 		printk("Stream %d: Sample per frame: %d\n", j, streams[j].ch_spf);
 
-		streams[j].sdu_len = qos.sdu;
+		streams[j].sdu_len = preset_lc3.qos.sdu;
 
 		/* Store position of start and end+1 of frame blocks */
 		streams[j].start = streams[j].data;
@@ -385,13 +399,13 @@ static int setup_broadcast_source(void)
 
 	create_param.params_count = NUM_SUBGROUPS;
 	create_param.params = subgroup_params;
-	create_param.qos = &qos;
+	create_param.qos = &preset_lc3.qos;
 	create_param.encryption = (strlen(CONFIG_BROADCAST_CODE) > 0);
 	create_param.packing = BT_ISO_PACKING_SEQUENTIAL;
 
 	printk("Creating broadcast source with %d subgroups...\n", NUM_SUBGROUPS);
 
-	int err = bt_bap_broadcast_source_create(&create_param, &broadcast_source);
+	err = bt_bap_broadcast_source_create(&create_param, &broadcast_source);
 	if (err) {
 		printk("Failed to create broadcast source: %d\n", err);
 		return err;
