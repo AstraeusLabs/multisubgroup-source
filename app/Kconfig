@@ -29,6 +29,9 @@ config BT_BAP_AUDIO_CH_MONO
 config BT_BAP_AUDIO_CH_STEREO
     bool "Stereo"
 
+config BT_BAP_AUDIO_CH_LCR
+    bool "LCR"
+
 endchoice
 
 config BROADCAST_CODE
