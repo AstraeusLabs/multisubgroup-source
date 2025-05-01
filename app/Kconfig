@@ -30,7 +30,7 @@ config BT_BAP_AUDIO_CH_STEREO
     bool "Stereo"
 
 config BT_BAP_AUDIO_CH_LCR
-    bool "LCR"
+    bool "LCR (Left-Center-Right)"
 
 endchoice
 
