@@ -6,7 +6,7 @@
 #define LC3_AUDIO_H
 
 
-#define BROADCAST_NAME 		"Multi-Subgroup Broadcast"
+#define BROADCAST_NAME 		"Multisubgroup Broadcast"
 
 #define NUM_STREAM_FILES	3
 
@@ -47,7 +47,7 @@ const uint8_t *subgroup_language[] = {
 enum bt_audio_parental_rating subgroup_parental[] = {
 	BT_AUDIO_PARENTAL_RATING_AGE_ANY,
 	BT_AUDIO_PARENTAL_RATING_AGE_5_OR_ABOVE,
-	BT_AUDIO_PARENTAL_RATING_NO_RATING
+	BT_AUDIO_PARENTAL_RATING_AGE_7_OR_ABOVE
 };
 
 const uint8_t *subgroup_broadcast_name[] = {
