@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# This script generates an overlay configuration file for the nRF52840 dongle
+# and builds the project using the Zephyr build system. It also creates a firmware
+# package and flashes it to the dongle if specified.
+# The script accepts various command-line options to customize the configuration
+# and build process.
+
+
 subgroups=""
 samplerate="16k"
 channels="mono"
@@ -7,9 +14,9 @@ channel_count=1
 samplerate_define=""
 channel_define=""
 generate_config=false
-outfile_name="overlay-prj.conf"
+outfile_name="overlay-52840dongle.conf"
 outfile="app/${outfile_name}"
-package_file="build_dongle.zip"
+package_file="build/build_dongle.zip"
 tty_name="ttyACM0"
 do_build=false
 create_package=false
@@ -22,7 +29,7 @@ print_help() {
     echo "Options:"
     echo "  -sg, --subgroups N            Number of subgroups (required, 1-9)"
     echo "  -sr, --sample-rate SR         Sample rate: 16k (default), 24k, or 48k"
-    echo "  -ch, --audio-channels TYPE    Audio channels: mono (default), stereo, or lcr"
+    echo "  -ch, --audio-channels MODE    Audio channels: mono (default), stereo, or lcr"
     echo "  -g,  --generate-config        Generate the config file"
     echo "  -b,  --build                  Build the project (based on the generated config)"
     echo "  -p,  --create-package         Create a firmware package"
@@ -47,7 +54,7 @@ generate_overlay_conf() {
 
     case "$samplerate" in
         16k)
-            samplerate_define=""
+            samplerate_define="CONFIG_BT_BAP_AUDIO_SR_16K=y"
             ;;
         24k)
             samplerate_define="CONFIG_BT_BAP_AUDIO_SR_24K=y"
@@ -64,7 +71,7 @@ generate_overlay_conf() {
     case "$channels" in
         mono)
             channel_count=1
-            channel_define=""
+            channel_define="CONFIG_BT_BAP_AUDIO_CH_MONO=y"
             ;;
         stereo)
             channel_count=2
@@ -84,25 +91,46 @@ generate_overlay_conf() {
     iso_tx_buf_count=$((3 * stream_count))
 
     # Generate config file
-    mkdir -p "$(dirname "$outfile")"
+    dir_path="$(dirname "$outfile")"
+    if [ ! -d "$dir_path" ]; then
+        echo "Error: Directory '$dir_path' does not exist!"
+        exit 1
+    fi
+
     {
-        echo "# Overlay Configuration for Broadcast Audio Source"
+        echo "# Overlay Configuration for nRF52840-dongle"
+        echo "# Broadcast Audio Source"
         echo ""
+        echo "# Subgroup and stream configuration"
         echo "CONFIG_BT_BAP_BROADCAST_SRC_SUBGROUP_COUNT=$subgroups"
         echo "CONFIG_BT_BAP_BROADCAST_SRC_STREAM_COUNT=$stream_count"
         echo ""
-        echo "CONFIG_BT_CTLR_ADV_ISO_STREAM_MAX=$stream_count"
-        echo "CONFIG_BT_CTLR_ISOAL_SOURCES=$stream_count"
-        echo ""
+        echo "# ISO channel & buffer configuration"
         echo "CONFIG_BT_ISO_MAX_CHAN=$stream_count"
         echo "CONFIG_BT_ISO_TX_BUF_COUNT=$iso_tx_buf_count"
         echo ""
-        [[ -n "$channel_define" ]] && echo "$channel_define"
-        [[ -n "$samplerate_define" ]] && echo "$samplerate_define"
-        echo
+        echo "# Audio configuration"
+        echo "$samplerate_define"
+        echo "$channel_define"
+        echo ""
+        echo "# Stream configuration for controller"
+        echo "CONFIG_BT_CTLR_ISOAL_SOURCES=$stream_count"
+        echo ""
     } > "$outfile"
 
     echo "Generated config: $outfile"
+}
+
+clean_all() {
+    echo "Cleaning generated overlay config file and build directory..."
+    rm -rf build ${outfile}
+
+    if [ $? -ne 0 ]; then
+	echo "❌ Failed to clean overlay config and/or build directory. Exiting."
+	exit 1
+    fi
+
+    echo "✅ Cleaned successfully."
 }
 
 
@@ -162,9 +190,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
 	-cl|--clean)
-	    echo "Cleaning generated config file, build directory and firmware package..."
-	    rm -rf app/overlay-prj.conf build_dongle.zip build
-	    echo "Cleaned successfully."
+            clean_all
 	    exit 0
 	    ;;
         -h|--help)
@@ -187,17 +213,19 @@ fi
 if $generate_config; then
     echo "Generating overlay configuration..."
     generate_overlay_conf
+
     if [ $? -ne 0 ]; then
 	echo "❌ Failed to generate overlay configuration. Exiting."
 	exit 1
     fi
+
     echo "✅ Overlay configuration generated successfully."
 fi
 
 # Build and flash options
 if $do_build; then
     echo "Running west build..."
-    west build -b nrf52840dongle -d build/nrf52840dongle/app app --pristine -- "-DOVERLAY_CONFIG=overlay-bt_ll_sw_split.conf;${outfile_name}"
+    west build -b nrf52840dongle -d build/nrf52840dongle/app app --pristine -- "-DEXTRA_CONF_FILE=overlay-bt_ll_sw_split.conf;${outfile_name}"
 
     if [ $? -ne 0 ]; then
 	echo "❌ Build failed. Exiting."
@@ -207,7 +235,7 @@ if $do_build; then
     echo "✅ Build completed successfully."
 fi
 if $create_package; then
-    echo "Creating package ${package_file}..."
+    echo "Creating firmware package..."
     nrfutil pkg generate --hw-version 52 --sd-req=0x00 --application ./build/nrf52840dongle/app/zephyr/zephyr.hex --application-version 1 ${package_file}
 
     if [ $? -ne 0 ]; then

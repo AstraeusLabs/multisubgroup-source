@@ -5,4 +5,4 @@ build*
 bootloader
 tools
 modules
-overlay-prj.conf
+overlay-52840dongle.conf
