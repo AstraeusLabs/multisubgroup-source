@@ -57,27 +57,28 @@ To prepare and add stream files to the project, follow these steps:
 To modify the number of subgroups, streams per subgroup, sample rate, or audio channel mode:
 
 - **Adjustments in `prj.conf`**
-   - **Subgroup and stream configuration**
-      - Set `CONFIG_BT_BAP_BROADCAST_SRC_SUBGROUP_COUNT` to the desired number of subgroups.
-      - Set `CONFIG_BT_BAP_BROADCAST_SRC_STREAM_COUNT` to the total number of streams (subgroups × streams per subgroup).
+  - **Subgroup and stream configuration**
+    - Set `CONFIG_BT_BAP_BROADCAST_SRC_SUBGROUP_COUNT` to the desired number of subgroups.
+    - Set `CONFIG_BT_BAP_BROADCAST_SRC_STREAM_COUNT` to the total number of streams (subgroups × streams per subgroup).
 
-   - **ISO channel and buffer configuration** (if total streams > 6)
-      - Set `CONFIG_BT_ISO_MAX_CHAN` to at least the total number of streams.
-      - Set `CONFIG_BT_ISO_TX_BUF_COUNT` to at least three times the total number of streams.
+  - **ISO channel and buffer configuration** (if total streams > 6)
+    - Set `CONFIG_BT_ISO_MAX_CHAN` to at least the total number of streams.
+    - Set `CONFIG_BT_ISO_TX_BUF_COUNT` to at least three times the total number of streams.
 
-   - **Audio sample rate** (if not using the default 16 kHz)
-      - Uncomment `CONFIG_BT_BAP_AUDIO_SR_24K=y` for a 24 kHz sample rate.
-      - Uncomment `CONFIG_BT_BAP_AUDIO_SR_48K=y` for a 48 kHz sample rate.
+  - **Audio sample rate** (if not using the default 16 kHz)
+    - Uncomment `CONFIG_BT_BAP_AUDIO_SR_24K=y` for a 24 kHz sample rate.
+    - Uncomment `CONFIG_BT_BAP_AUDIO_SR_48K=y` for a 48 kHz sample rate.
 
-   - **Audio channel mode** (if not using the default Mono)
-      - Uncomment `CONFIG_BT_BAP_AUDIO_CH_STEREO=y` for "Stereo".
-      - Uncomment `CONFIG_BT_BAP_AUDIO_CH_LCR=y` for "LCR" (Left-Center-Right).
+  - **Audio channel mode** (if not using the default Mono)
+    - Uncomment `CONFIG_BT_BAP_AUDIO_CH_STEREO=y` for "Stereo".
+    - Uncomment `CONFIG_BT_BAP_AUDIO_CH_LCR=y` for "LCR" (Left-Center-Right).
 
-   NOTE: For Mono, Stereo, and LCR audio channel modes, the number of streams per subgroup is 1, 2, and 3, respectively.
+    NOTE: For Mono, Stereo, and LCR audio channel modes, the number of streams per subgroup is 1, 2, and 3, respectively.
 
 - **Adjustments to controller configuration in `overlay-bt_ll_sw_split.conf`** (if needed)
-   - **Stream configuration for controller** (if total streams > 6)
-      - Set `CONFIG_BT_CTLR_ISOAL_SOURCES` to at least the total number of streams.
+  - **Stream configuration for controller** (if total streams > 6)
+    - Set `CONFIG_BT_CTLR_ADV_ISO_STREAM_MAX` to at least the total number of streams.
+    - Set `CONFIG_BT_CTLR_ISOAL_SOURCES` to at least the total number of streams.
 
 
 # Build and flash

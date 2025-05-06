@@ -114,6 +114,7 @@ generate_overlay_conf() {
         echo "$channel_define"
         echo ""
         echo "# Stream configuration for controller"
+        echo "CONFIG_BT_CTLR_ADV_ISO_STREAM_MAX=$stream_count"
         echo "CONFIG_BT_CTLR_ISOAL_SOURCES=$stream_count"
         echo ""
     } > "$outfile"
