@@ -128,10 +128,10 @@ Alternatively, you can use the provided scripts to modify project config, build 
 Execute them in the following order:
 
 ```shell
-config_build_flash.sh -g -sg <number of desired subgroups> -sr <16k/24k/48k> -ch <mono/stereo/lcr>
-config_build_flash.sh -b
-config_build_flash.sh -p
-config_build_flash.sh -f -dd /dev/ttyACMx
+./config_build_flash.sh -g -sg <number of desired subgroups> -sr <16k/24k/48k> -ch <mono/stereo/lcr>
+./config_build_flash.sh -b
+./config_build_flash.sh -p
+./config_build_flash.sh -f -dd /dev/ttyACMx
 ```
 
 - Replace `/dev/ttyACMx` with the correct device identifier.
@@ -141,5 +141,5 @@ NOTE: You can also combine multiple steps into a single command.
 For full usage instructions, run:
 
 ```shell
-config_build_flash.sh -h
+./config_build_flash.sh -h
 ```

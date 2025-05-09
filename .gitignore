@@ -6,3 +6,4 @@ bootloader
 tools
 modules
 overlay-52840dongle.conf
+app/src/lc3/*.lc3
