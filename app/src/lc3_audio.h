@@ -37,6 +37,7 @@ static const uint8_t *lc3_audio[] = {
 #define SET_SUBGROUP_PARENTAL_METADATA		true
 #define SET_SUBGROUP_BROADCASTNAME_METADATA	true
 #define SET_SUBGROUP_PROGRAMINFO_METADATA	true
+#define SET_SUBGROUP_ACTIVE_STATE_METADATA	false
 
 const uint8_t *subgroup_language[] = {
 	"eng",
@@ -60,6 +61,12 @@ const uint8_t *subgroup_program_info[] = {
 	"Program info 1",
 	"Program info 2",
 	"Program info 3"
+};
+
+enum bt_audio_active_state subgroup_active_state[] = {
+	BT_AUDIO_ACTIVE_STATE_DISABLED,
+	BT_AUDIO_ACTIVE_STATE_DISABLED,
+	BT_AUDIO_ACTIVE_STATE_DISABLED
 };
 
 #endif /* LC3_AUDIO_H */

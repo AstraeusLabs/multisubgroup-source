@@ -109,11 +109,11 @@ static const struct named_lc3_preset lc3_broadcast_presets[] = {
 	{"48_4_2", BT_BAP_LC3_BROADCAST_PRESET_48_4_2(LOCATION, CONTEXT)},
 	{"48_5_2", BT_BAP_LC3_BROADCAST_PRESET_48_5_2(LOCATION, CONTEXT)},
 	{"48_6_2", BT_BAP_LC3_BROADCAST_PRESET_48_6_2(LOCATION, CONTEXT)},
-};						
+};
 
 BUILD_ASSERT(strlen(CONFIG_BROADCAST_CODE) <= BT_ISO_BROADCAST_CODE_SIZE,
 	     "Invalid broadcast code");
-	
+
 BUILD_ASSERT(CONFIG_BT_ISO_TX_BUF_COUNT >= TOTAL_BUF_NEEDED,
 	     "CONFIG_BT_ISO_TX_BUF_COUNT should be at least "
 	     "BROADCAST_ENQUEUE_COUNT * CONFIG_BT_BAP_BROADCAST_SRC_STREAM_COUNT");
@@ -138,7 +138,7 @@ struct broadcast_source_stream {
 	uint16_t sdu_len;
 	uint16_t ch_spf;
 	uint8_t ch_count;
-};		
+};
 
 static struct broadcast_source_stream streams[NUM_STREAMS];
 static struct bt_bap_broadcast_source *broadcast_source;
@@ -384,6 +384,12 @@ static int setup_broadcast_source(void)
 				subgroup_program_info[i], strlen(subgroup_program_info[i]));
 		}
 #endif
+#if (SET_SUBGROUP_ACTIVE_STATE_METADATA)
+		if (subgroup_active_state[i] <= BT_AUDIO_ACTIVE_STATE_ENABLED) {
+			bt_audio_codec_cfg_meta_set_audio_active_state(&subgroup_codec_cfg[i],
+				subgroup_active_state[i]);
+		}
+#endif
 
 		subgroup_params[i].params_count = streams_per_subgroup;
 		subgroup_params[i].params = stream_params + (i * streams_per_subgroup);
@@ -585,7 +591,7 @@ int main(void)
 	per_ad.data_len = base_buf.len;
 	per_ad.data = base_buf.data;
 	printk("PA data len = %d\n", per_ad.data_len);
-	
+
 	err = bt_le_per_adv_set_data(adv, &per_ad, 1);
 	if (err) {
 		printk("Failed to set periodic advertising data (err %d)\n", err);
