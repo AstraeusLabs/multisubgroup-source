@@ -17,7 +17,7 @@ generate_config=false
 outfile_name="overlay-52840dongle.conf"
 outfile="app/${outfile_name}"
 package_file="build/build_dongle.zip"
-tty_name="ttyACM0"
+dongle_device="/dev/ttyACM0"
 do_build=false
 create_package=false
 do_flash=false
@@ -166,8 +166,11 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         -dd|--doungle-device)
-            tty_name="$2"
-            if ! [[ "$tty_name" =~ ^ttyACM[0-9]+$ ]]; then
+            if [[ "$2" =~ ^/dev/ttyACM[0-9]+$ ]]; then
+                dongle_device="$2"
+            elif [[ "$2" =~ ^ttyACM[0-9]+$ ]]; then
+                dongle_device="/dev/$2"
+            else
                 echo "Error: Invalid dongle device name. Expected ttyACMx where x is a number."
                 exit 1
             fi
@@ -247,8 +250,6 @@ if $create_package; then
     echo "✅ Package created: ${package_file}"
 fi
 if $do_flash; then
-    dongle_device="/dev/${tty_name}"
-
     echo "Flashing the dongle..."
     echo "Note: The device must be set in DFU flashing mode by pressing the small side button (with a nail)"
     echo "Trying to flash ${package_file} to ${dongle_device}"
