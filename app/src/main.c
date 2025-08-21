@@ -11,6 +11,7 @@
 #include <zephyr/bluetooth/audio/bap.h>
 #include <zephyr/bluetooth/audio/bap_lc3_preset.h>
 #include <zephyr/drivers/hwinfo.h>
+#include <zephyr/sys/base64.h>
 
 #include "lc3_audio.h"
 #include "rgb_led.h"
@@ -142,8 +143,6 @@ struct broadcast_source_stream {
 
 static struct broadcast_source_stream streams[NUM_STREAMS];
 static struct bt_bap_broadcast_source *broadcast_source;
-
-const char *broadcast_name = BROADCAST_NAME;
 
 static K_SEM_DEFINE(sem_started, 0, NUM_STREAMS);
 static K_SEM_DEFINE(sem_stopped, 0, NUM_STREAMS);
@@ -488,6 +487,26 @@ static int setup_broadcast_source(void)
 	return 0;
 }
 
+void print_broadcast_audio_uri(const bt_addr_t *addr, uint32_t broadcast_id, uint8_t *name, uint8_t sid)
+{
+	uint8_t addr_str[13];
+	uint8_t name_base64[128];
+	size_t name_base64_len;
+
+	/* Address */
+	snprintk(addr_str, sizeof(addr_str), "%02X%02X%02X%02X%02X%02X",
+		 addr->val[5], addr->val[4], addr->val[3],
+		 addr->val[2], addr->val[1], addr->val[0]);
+
+	/* Name */
+	base64_encode(name_base64, sizeof(name_base64), &name_base64_len, name, strlen(name));
+	name_base64[name_base64_len + 1] = 0;
+
+	/* Most fields hard coded for this demo */
+	printk("Broadcast Audio URI string:\n");
+	printk("\"BLUETOOTH:UUID:184F;BN:%s;SQ:1;AT:1;AD:%s;AS:%u;BI:%06X;PI:FFFF;NS:1;BS:1;;\"\n",
+		 name_base64, addr_str, sid, broadcast_id);
+}
 
 int main(void)
 {
@@ -533,7 +552,7 @@ int main(void)
 	printk("Extended advertising created\n");
 
 	/* Set periodic advertising parameters */
-	err = bt_le_per_adv_set_param(adv, BT_LE_PER_ADV_DEFAULT);
+	err = bt_le_per_adv_set_param(adv, BT_BAP_PER_ADV_PARAM_BROADCAST_FAST);
 	if (err) {
 		printk("Failed to set periodic advertising params (err %d)\n", err);
 		rgb_led_set(0xff, 0, 0);
@@ -562,7 +581,7 @@ int main(void)
 	net_buf_simple_add_le24(&ad_buf, broadcast_id);
 
 	struct bt_data ext_ad[3];
-	ext_ad[0] = (struct bt_data)BT_DATA(BT_DATA_BROADCAST_NAME, broadcast_name, strlen(broadcast_name));
+	ext_ad[0] = (struct bt_data)BT_DATA(BT_DATA_BROADCAST_NAME, BROADCAST_NAME, strlen(BROADCAST_NAME));
 	ext_ad[1].type = BT_DATA_SVC_DATA16;
 	ext_ad[1].data_len = ad_buf.len;
 	ext_ad[1].data = ad_buf.data;
@@ -617,6 +636,11 @@ int main(void)
 
 		return 0;
 	}
+
+	/* Print Broadcast Audio URI to log */
+	struct bt_le_ext_adv_info advInfo;
+	bt_le_ext_adv_get_info(adv, &advInfo);
+	print_broadcast_audio_uri(&advInfo.addr->a, broadcast_id, BROADCAST_NAME, 0);
 
 	printk("Advertising started (Extended + Periodic)\n");
 

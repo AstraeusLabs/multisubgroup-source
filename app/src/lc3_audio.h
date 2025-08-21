@@ -35,8 +35,8 @@ static const uint8_t *lc3_audio[] = {
 
 #define SET_SUBGROUP_LANGUAGE_METADATA		true
 #define SET_SUBGROUP_PARENTAL_METADATA		true
-#define SET_SUBGROUP_BROADCASTNAME_METADATA	true
-#define SET_SUBGROUP_PROGRAMINFO_METADATA	true
+#define SET_SUBGROUP_BROADCASTNAME_METADATA	false
+#define SET_SUBGROUP_PROGRAMINFO_METADATA	false
 #define SET_SUBGROUP_ACTIVE_STATE_METADATA	false
 
 const uint8_t *subgroup_language[] = {
