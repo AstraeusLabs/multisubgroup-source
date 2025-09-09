@@ -6,7 +6,7 @@
 #define LC3_AUDIO_H
 
 
-#define BROADCAST_NAME 		"Multisubgroup Broadcast"
+#define BROADCAST_NAME 		"Broadcast Audio"
 
 #define NUM_STREAM_FILES	3
 
@@ -33,11 +33,12 @@ static const uint8_t *lc3_audio[] = {
 };
 
 
-#define SET_SUBGROUP_LANGUAGE_METADATA		true
-#define SET_SUBGROUP_PARENTAL_METADATA		true
-#define SET_SUBGROUP_BROADCASTNAME_METADATA	false
-#define SET_SUBGROUP_PROGRAMINFO_METADATA	false
-#define SET_SUBGROUP_ACTIVE_STATE_METADATA	false
+#define SET_SUBGROUP_LANGUAGE_METADATA			true
+#define SET_SUBGROUP_PARENTAL_METADATA			true
+#define SET_SUBGROUP_BROADCASTNAME_METADATA		false
+#define SET_SUBGROUP_PROGRAMINFO_METADATA		false
+#define SET_SUBGROUP_ACTIVE_STATE_METADATA		false
+#define SET_SUBGROUP_ASSISTED_LISTENING_METADATA	false
 
 const uint8_t *subgroup_language[] = {
 	"eng",
@@ -52,21 +53,27 @@ enum bt_audio_parental_rating subgroup_parental[] = {
 };
 
 const uint8_t *subgroup_broadcast_name[] = {
-	"Broadcast 1",
-	"Broadcast 2",
-	"Broadcast 3"
+	"Sample-1",
+	"Sample-2",
+	"Sample-3"
 };
 
 const uint8_t *subgroup_program_info[] = {
-	"Program info 1",
-	"Program info 2",
-	"Program info 3"
+	"Prg_info_1",
+	"Prg_info_2",
+	"Prg_info_3"
 };
 
 enum bt_audio_active_state subgroup_active_state[] = {
 	BT_AUDIO_ACTIVE_STATE_DISABLED,
 	BT_AUDIO_ACTIVE_STATE_DISABLED,
 	BT_AUDIO_ACTIVE_STATE_DISABLED
+};
+
+enum bt_audio_assisted_listening_stream subgroup_assisted_listening[] = {
+	BT_AUDIO_ASSISTED_LISTENING_STREAM_UNSPECIFIED,
+	BT_AUDIO_ASSISTED_LISTENING_STREAM_UNSPECIFIED,
+	BT_AUDIO_ASSISTED_LISTENING_STREAM_UNSPECIFIED
 };
 
 #endif /* LC3_AUDIO_H */

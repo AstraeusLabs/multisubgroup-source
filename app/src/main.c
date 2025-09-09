@@ -213,7 +213,8 @@ int lc3bin_read_header(uint8_t **data, int *frame_us, int *srate_hz,
 	return sizeof(hdr);
 }
 
-int lc3bin_read_data(struct broadcast_source_stream *source_stream, uint8_t **data, int nchannels, void *buffer)
+int lc3bin_read_data(struct broadcast_source_stream *source_stream,
+		     uint8_t **data, int nchannels, void *buffer)
 {
 	uint16_t nbytes;
 
@@ -248,7 +249,10 @@ static void send_stream_data(struct broadcast_source_stream *source_stream)
 	}
 
 	/* read one frame */
-	ret = lc3bin_read_data(source_stream, &(source_stream->data), source_stream->ch_count, read_buffer);
+	ret = lc3bin_read_data(source_stream,
+			       &(source_stream->data),
+			       source_stream->ch_count,
+			       read_buffer);
 
 	if (ret < 0) {
 		printk("ERROR READING LC3 DATA!\n");
@@ -268,13 +272,15 @@ static void send_stream_data(struct broadcast_source_stream *source_stream)
 
 	source_stream->sent_count++;
 	if ((source_stream->sent_count % 1000U) == 0U) {
-		printk("Stream %p: Sent %u total ISO packets\n", stream, source_stream->sent_count);
+		printk("Stream %p: Sent %u total ISO packets\n",
+			stream, source_stream->sent_count);
 	}
 }
 
 static void stream_started_cb(struct bt_bap_stream *stream)
 {
-	struct broadcast_source_stream *source_stream = CONTAINER_OF(stream, struct broadcast_source_stream, stream);
+	struct broadcast_source_stream *source_stream =
+		CONTAINER_OF(stream, struct broadcast_source_stream, stream);
 
 	source_stream->seq_num   = 0;
 	source_stream->sent_count = 0;
@@ -292,7 +298,8 @@ static void stream_stopped_cb(struct bt_bap_stream *stream, uint8_t reason)
 
 static void stream_sent_cb(struct bt_bap_stream *stream)
 {
-	struct broadcast_source_stream *source_stream = CONTAINER_OF(stream, struct broadcast_source_stream, stream);
+	struct broadcast_source_stream *source_stream =
+		CONTAINER_OF(stream, struct broadcast_source_stream, stream);
 
 	send_stream_data(source_stream);
 }
@@ -313,6 +320,122 @@ static int get_lc3_preset(struct bt_bap_lc3_preset *preset, const char *preset_a
 	}
 
 	return -EINVAL;
+}
+
+void print_broadcast_audio_uri(const bt_addr_t *addr, uint32_t broadcast_id,
+			       uint8_t *name, uint8_t sid)
+{
+	uint8_t addr_str[13];
+	uint8_t name_base64[128];
+	size_t name_base64_len;
+
+	/* Address */
+	snprintk(addr_str, sizeof(addr_str), "%02X%02X%02X%02X%02X%02X",
+		 addr->val[5], addr->val[4], addr->val[3],
+		 addr->val[2], addr->val[1], addr->val[0]);
+
+	/* Name */
+	base64_encode(name_base64, sizeof(name_base64), &name_base64_len, name, strlen(name));
+	name_base64[name_base64_len + 1] = 0;
+
+	/* Most fields hard coded for this demo */
+	printk("Broadcast Audio URI string:\n");
+	printk("\"BLUETOOTH:UUID:184F;BN:%s;SQ:1;AT:1;AD:%s;AS:%u;BI:%06X;PI:FFFF;NS:1;BS:1;;\"\n",
+		 name_base64, addr_str, sid, broadcast_id);
+}
+
+static void set_subgroup_metadata(struct bt_audio_codec_cfg *sg_codec_cfg, uint8_t idx)
+{
+#if (SET_SUBGROUP_LANGUAGE_METADATA)
+	if (strlen(subgroup_language[idx]) == BT_AUDIO_LANG_SIZE) {
+		int err = bt_audio_codec_cfg_meta_set_lang(
+				&sg_codec_cfg[idx], subgroup_language[idx]);
+
+		if (err < 0) {
+			printk("Failed to set language metadata for subgroup %d: %d\n",
+				idx, err);
+		}
+	}
+	else {
+		printk("Invalid language string for subgroup %d: '%s'\n",
+		       idx, subgroup_language[idx]);
+	}
+#endif
+#if (SET_SUBGROUP_PARENTAL_METADATA)
+	if (subgroup_parental[idx] <= BT_AUDIO_PARENTAL_RATING_AGE_18_OR_ABOVE) {
+		int err = bt_audio_codec_cfg_meta_set_parental_rating(
+				&sg_codec_cfg[idx], subgroup_parental[idx]);
+
+		if (err < 0) {
+			printk("Failed to set parental rating metadata for subgroup %d: %d\n",
+			       idx, err);
+		}
+	}
+	else {
+		printk("Invalid parental rating for subgroup %d: %d\n",
+		       idx, subgroup_parental[idx]);
+	}
+#endif
+#if (SET_SUBGROUP_BROADCASTNAME_METADATA)
+	if (strlen(subgroup_broadcast_name[idx]) > 0) {
+		int err = bt_audio_codec_cfg_meta_set_broadcast_name(
+				&sg_codec_cfg[idx], subgroup_broadcast_name[idx],
+				strlen(subgroup_broadcast_name[idx]));
+
+		if (err < 0) {
+			printk("Failed to set broadcast name metadata for subgroup %d: %d\n",
+			       idx, err);
+		}
+	}
+	else {
+		printk("No broadcast name set for subgroup %d\n", idx);
+	}
+#endif
+#if (SET_SUBGROUP_PROGRAMINFO_METADATA)
+	if (strlen(subgroup_program_info[idx]) > 0) {
+		int err = bt_audio_codec_cfg_meta_set_program_info(
+				&sg_codec_cfg[idx], subgroup_program_info[idx],
+				strlen(subgroup_program_info[idx]));
+
+		if (err < 0) {
+			printk("Failed to set program info metadata for subgroup %d: %d\n",
+			       idx, err);
+		}
+	}
+	else {
+		printk("No program info set for subgroup %d\n", idx);
+	}
+#endif
+#if (SET_SUBGROUP_ACTIVE_STATE_METADATA)
+	if (subgroup_active_state[idx] <= BT_AUDIO_ACTIVE_STATE_ENABLED) {
+		int err = bt_audio_codec_cfg_meta_set_audio_active_state(
+				&sg_codec_cfg[idx], subgroup_active_state[idx]);
+
+		if (err < 0) {
+			printk("Failed to set active state metadata for subgroup %d: %d\n",
+			       idx, err);
+		}
+	}
+	else {
+		printk("Invalid active state for subgroup %d: %d\n",
+		       idx, subgroup_active_state[idx]);
+	}
+#endif
+#if (SET_SUBGROUP_ASSISTED_LISTENING_METADATA)
+	if (subgroup_assisted_listening[idx] <= BT_AUDIO_ASSISTED_LISTENING_STREAM_UNSPECIFIED) {
+		int err = bt_audio_codec_cfg_meta_set_assisted_listening_stream(
+				&sg_codec_cfg[idx], subgroup_assisted_listening[idx]);
+
+		if (err < 0) {
+			printk("Failed to set assisted listening metadata for subgroup %d: %d\n",
+			       idx, err);
+		}
+	}
+	else {
+		printk("Invalid assisted listening stream for subgroup %d: %d\n",
+		       idx, subgroup_assisted_listening[idx]);
+	}
+#endif
 }
 
 static int setup_broadcast_source(void)
@@ -359,36 +482,7 @@ static int setup_broadcast_source(void)
 			BT_AUDIO_CODEC_CFG_CHAN_ALLOC);
 #endif
 
-#if (SET_SUBGROUP_LANGUAGE_METADATA)
-		if (strlen(subgroup_language[i]) == BT_AUDIO_LANG_SIZE) {
-			bt_audio_codec_cfg_meta_set_lang(&subgroup_codec_cfg[i],
-				subgroup_language[i]);
-		}
-#endif
-#if (SET_SUBGROUP_PARENTAL_METADATA)
-		if (subgroup_parental[i] <= BT_AUDIO_PARENTAL_RATING_AGE_18_OR_ABOVE) {
-			bt_audio_codec_cfg_meta_set_parental_rating(&subgroup_codec_cfg[i],
-				subgroup_parental[i]);
-		}
-#endif
-#if (SET_SUBGROUP_BROADCASTNAME_METADATA)
-		if (strlen(subgroup_broadcast_name[i]) > 0) {
-			bt_audio_codec_cfg_meta_set_broadcast_name(&subgroup_codec_cfg[i],
-				subgroup_broadcast_name[i], strlen(subgroup_broadcast_name[i]));
-		}
-#endif
-#if (SET_SUBGROUP_POGRAMINFO_METADATA)
-		if (strlen(subgroup_program_info[i]) > 0) {
-			bt_audio_codec_cfg_meta_set_program_info(&subgroup_codec_cfg[i],
-				subgroup_program_info[i], strlen(subgroup_program_info[i]));
-		}
-#endif
-#if (SET_SUBGROUP_ACTIVE_STATE_METADATA)
-		if (subgroup_active_state[i] <= BT_AUDIO_ACTIVE_STATE_ENABLED) {
-			bt_audio_codec_cfg_meta_set_audio_active_state(&subgroup_codec_cfg[i],
-				subgroup_active_state[i]);
-		}
-#endif
+		set_subgroup_metadata(subgroup_codec_cfg, i);
 
 		subgroup_params[i].params_count = streams_per_subgroup;
 		subgroup_params[i].params = stream_params + (i * streams_per_subgroup);
@@ -487,26 +581,6 @@ static int setup_broadcast_source(void)
 	return 0;
 }
 
-void print_broadcast_audio_uri(const bt_addr_t *addr, uint32_t broadcast_id, uint8_t *name, uint8_t sid)
-{
-	uint8_t addr_str[13];
-	uint8_t name_base64[128];
-	size_t name_base64_len;
-
-	/* Address */
-	snprintk(addr_str, sizeof(addr_str), "%02X%02X%02X%02X%02X%02X",
-		 addr->val[5], addr->val[4], addr->val[3],
-		 addr->val[2], addr->val[1], addr->val[0]);
-
-	/* Name */
-	base64_encode(name_base64, sizeof(name_base64), &name_base64_len, name, strlen(name));
-	name_base64[name_base64_len + 1] = 0;
-
-	/* Most fields hard coded for this demo */
-	printk("Broadcast Audio URI string:\n");
-	printk("\"BLUETOOTH:UUID:184F;BN:%s;SQ:1;AT:1;AD:%s;AS:%u;BI:%06X;PI:FFFF;NS:1;BS:1;;\"\n",
-		 name_base64, addr_str, sid, broadcast_id);
-}
 
 int main(void)
 {
@@ -581,7 +655,9 @@ int main(void)
 	net_buf_simple_add_le24(&ad_buf, broadcast_id);
 
 	struct bt_data ext_ad[3];
-	ext_ad[0] = (struct bt_data)BT_DATA(BT_DATA_BROADCAST_NAME, BROADCAST_NAME, strlen(BROADCAST_NAME));
+	ext_ad[0] = (struct bt_data)BT_DATA(BT_DATA_BROADCAST_NAME,
+					    BROADCAST_NAME,
+					    strlen(BROADCAST_NAME));
 	ext_ad[1].type = BT_DATA_SVC_DATA16;
 	ext_ad[1].data_len = ad_buf.len;
 	ext_ad[1].data = ad_buf.data;
