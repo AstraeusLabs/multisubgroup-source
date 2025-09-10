@@ -360,7 +360,7 @@ static void set_subgroup_metadata(struct bt_audio_codec_cfg *sg_codec_cfg, uint8
 		printk("Invalid language string for subgroup %d: '%s'\n",
 		       idx, subgroup_language[idx]);
 	}
-#endif
+#endif /* SET_SUBGROUP_LANGUAGE_METADATA */
 #if (SET_SUBGROUP_PARENTAL_METADATA)
 	if (subgroup_parental[idx] <= BT_AUDIO_PARENTAL_RATING_AGE_18_OR_ABOVE) {
 		int err = bt_audio_codec_cfg_meta_set_parental_rating(
@@ -375,7 +375,7 @@ static void set_subgroup_metadata(struct bt_audio_codec_cfg *sg_codec_cfg, uint8
 		printk("Invalid parental rating for subgroup %d: %d\n",
 		       idx, subgroup_parental[idx]);
 	}
-#endif
+#endif /* SET_SUBGROUP_PARENTAL_METADATA */
 #if (SET_SUBGROUP_BROADCASTNAME_METADATA)
 	if (strlen(subgroup_broadcast_name[idx]) > 0) {
 		int err = bt_audio_codec_cfg_meta_set_broadcast_name(
@@ -390,7 +390,7 @@ static void set_subgroup_metadata(struct bt_audio_codec_cfg *sg_codec_cfg, uint8
 	else {
 		printk("No broadcast name set for subgroup %d\n", idx);
 	}
-#endif
+#endif /* SET_SUBGROUP_BROADCASTNAME_METADATA */
 #if (SET_SUBGROUP_PROGRAMINFO_METADATA)
 	if (strlen(subgroup_program_info[idx]) > 0) {
 		int err = bt_audio_codec_cfg_meta_set_program_info(
@@ -405,7 +405,7 @@ static void set_subgroup_metadata(struct bt_audio_codec_cfg *sg_codec_cfg, uint8
 	else {
 		printk("No program info set for subgroup %d\n", idx);
 	}
-#endif
+#endif /* SET_SUBGROUP_PROGRAMINFO_METADATA */
 #if (SET_SUBGROUP_ACTIVE_STATE_METADATA)
 	if (subgroup_active_state[idx] <= BT_AUDIO_ACTIVE_STATE_ENABLED) {
 		int err = bt_audio_codec_cfg_meta_set_audio_active_state(
@@ -420,8 +420,8 @@ static void set_subgroup_metadata(struct bt_audio_codec_cfg *sg_codec_cfg, uint8
 		printk("Invalid active state for subgroup %d: %d\n",
 		       idx, subgroup_active_state[idx]);
 	}
-#endif
-#if (SET_SUBGROUP_ASSISTED_LISTENING_METADATA)
+#endif /* SET_SUBGROUP_ACTIVE_STATE_METADATA */
+#if (SET_SUBGROUP_ASST_LSTN_STRM_METADATA)
 	if (subgroup_assisted_listening[idx] <= BT_AUDIO_ASSISTED_LISTENING_STREAM_UNSPECIFIED) {
 		int err = bt_audio_codec_cfg_meta_set_assisted_listening_stream(
 				&sg_codec_cfg[idx], subgroup_assisted_listening[idx]);
@@ -435,7 +435,7 @@ static void set_subgroup_metadata(struct bt_audio_codec_cfg *sg_codec_cfg, uint8
 		printk("Invalid assisted listening stream for subgroup %d: %d\n",
 		       idx, subgroup_assisted_listening[idx]);
 	}
-#endif
+#endif /* SET_SUBGROUP_ASST_LSTN_STRM_METADATA */
 }
 
 static int setup_broadcast_source(void)
